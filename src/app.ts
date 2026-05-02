@@ -35,7 +35,7 @@ app.use(
   })
 )
 
-import { health_router } from "./api/routes/health.route.js"
+import { health_router } from "./api/routes/health-route.js"
 
 app.use("/health", health_router)
 
