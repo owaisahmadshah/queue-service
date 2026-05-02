@@ -1,0 +1,74 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Logs
+logs/
+*.log
+logs/**/*.log
+debug.log
+error.log
+out.log
+nohup.out
+
+# VS Code settings
+.vscode/
+*.code-workspace
+
+# Build files
+dist/
+build/
+.tmp/
+.cache/
+out/
+
+# Database files
+*.sqlite
+*.sqlite3
+db.json
+
+# Process files
+pids/
+*.pid
+*.seed
+*.seed.ts
+
+# Temporary files
+*.swp
+*.swo
+*.bak
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# TypeScript
+*.tsbuildinfo
+
+# Jest & Testing
+coverage/
+.nyc_output/
+jest-coverage/
+
+# Misc
+.idea/
+*.iml
+*.sublime-workspace
+*.sublime-project
+
+#some random files
