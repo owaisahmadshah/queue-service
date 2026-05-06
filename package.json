@@ -11,7 +11,8 @@
     "prepare": "husky",
     "build": "tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "migrate": "tsx --env-file .env src/db/migrate.ts"
   },
   "keywords": [
     "nodejs",
