@@ -1,7 +1,12 @@
 import express, { type Application } from "express"
 import morgan from "morgan"
 import cors from "cors"
+import "reflect-metadata"
+import cookie_parser from "cookie-parser"
+
 import logger from "./utils/logger.js"
+
+import "./containers/index.js"
 
 const app: Application = express()
 
@@ -18,6 +23,7 @@ app.use(
 app.use(express.json({ limit: "16kb" }))
 app.use(express.urlencoded({ extended: true, limit: "16kb" }))
 app.use(express.static("public"))
+app.use(cookie_parser())
 
 app.use(
   morgan(morganFormat, {
@@ -34,9 +40,18 @@ app.use(
     },
   })
 )
+import { container } from "tsyringe"
 
-import { health_router } from "./api/routes/health-route.js"
+import { health_router } from "./routes/health-route.js"
+import { UserRouter } from "./routes/user-route.js"
+
+const user_router = container.resolve(UserRouter)
 
 app.use("/health", health_router)
+app.use("/user", user_router.router)
+
+import { error_handler } from "./middlewares/error_handler-middleware.js"
+
+app.use(error_handler)
 
 export { app }

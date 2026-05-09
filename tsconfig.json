@@ -18,7 +18,11 @@
     "rootDir": "./src",
     "outDir": "dist",
     "sourceMap": true,
-    "lib": ["ES2022"]
+    "lib": ["ES2022"],
+
+    /* Tsyringe */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "commitlint.config.js"]

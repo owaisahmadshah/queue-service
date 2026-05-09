@@ -9,6 +9,11 @@ const envSchema = z.object({
   POSTGRES_PASSWORD: z.string(),
   POSTGRES_HOST: z.string(),
   POSTGRES_DATABASE: z.string(),
+  ACCESS_TOKEN_SECRET: z.string(),
+  REFRESH_TOKEN_SECRET: z.string(),
+  NODE_ENV: z.string(),
+  NODE_MAILER_USER: z.string(),
+  NODE_MAILER_PASSWORD: z.string(),
 })
 
 const parsed = envSchema.safeParse(process.env)
