@@ -40,15 +40,19 @@ app.use(
     },
   })
 )
+
 import { container } from "tsyringe"
 
 import { health_router } from "./routes/health-route.js"
 import { UserRouter } from "./routes/user-route.js"
+import { ApiKeyRouter } from "./routes/api_key-route.js"
 
 const user_router = container.resolve(UserRouter)
+const api_key_router = container.resolve(ApiKeyRouter)
 
-app.use("/health", health_router)
-app.use("/user", user_router.router)
+app.use("/api/v1/health", health_router)
+app.use("/api/v1/user", user_router.router)
+app.use("/api/v1/api-key", api_key_router.router)
 
 import { error_handler } from "./middlewares/error_handler-middleware.js"
 
