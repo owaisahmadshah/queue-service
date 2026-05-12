@@ -1,25 +1,22 @@
 import { inject, injectable } from "tsyringe"
-import crypto from "node:crypto"
 
 import { ApiKeyRepository } from "../repositories/api_key-repository.js"
 import { ApiError } from "../utils/api-error.js"
 import type { TCreateApiKey, TRevokeApiKey } from "../types/api_key-type.js"
+import { CryptoService } from "./crypto-service.js"
 
 @injectable()
 export class ApiKeyService {
   private readonly PREFIX = "ntfy_"
 
   constructor(
-    @inject(ApiKeyRepository) private api_key_repository: ApiKeyRepository
+    @inject(ApiKeyRepository) private api_key_repository: ApiKeyRepository,
+    @inject(CryptoService) private crypto_service: CryptoService
   ) {}
 
   async create({ name, user_id }: TCreateApiKey) {
-    const entropy = crypto.randomBytes(32).toString("base64url")
-    const raw_key = `${this.PREFIX}${entropy}`
-
-    const key_hash = this.hash_key(raw_key)
-    // Grab prefix + first 4 chars of entropy for the preview (e.g., ntfy_abcd)
-    const key_preview = raw_key.substring(0, 9)
+    const { key_hash, key_preview, raw_key } =
+      this.crypto_service.generate_api_key(this.PREFIX)
 
     await this.api_key_repository.create(user_id!, key_hash, key_preview, name)
 
@@ -46,7 +43,7 @@ export class ApiKeyService {
   }
 
   async validate(raw_key: string) {
-    const incoming_hash = this.hash_key(raw_key)
+    const incoming_hash = this.crypto_service.hash_api_key(raw_key)
 
     const results = await this.api_key_repository.find_by_hash(incoming_hash)
     const key_data = results.rows[0]
@@ -58,9 +55,5 @@ export class ApiKeyService {
     this.api_key_repository.update_last_used(incoming_hash).catch(console.error)
 
     return key_data.user_id
-  }
-
-  private hash_key(raw_key: string) {
-    return crypto.createHash("sha256").update(raw_key).digest("hex")
   }
 }

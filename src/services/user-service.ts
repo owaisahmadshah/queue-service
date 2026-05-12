@@ -1,5 +1,4 @@
 import { inject, injectable } from "tsyringe"
-import bcrypt from "bcrypt"
 
 import type {
   TCreateUser,
@@ -10,12 +9,14 @@ import type {
 import { UserRepository } from "../repositories/user-repository.js"
 import { ApiError } from "../utils/api-error.js"
 import { TokenService } from "./token-service.js"
+import { CryptoService } from "./crypto-service.js"
 
 @injectable()
 export class UserService {
   constructor(
     @inject(UserRepository) private user_repository: UserRepository,
-    @inject(TokenService) private token_service: TokenService
+    @inject(TokenService) private token_service: TokenService,
+    @inject(CryptoService) private crypto_service: CryptoService
   ) {}
 
   async create_user(user_data: TCreateUser) {
@@ -27,7 +28,9 @@ export class UserService {
       throw new ApiError(409, "User with this email already exists")
     }
 
-    const hashed_password = await this.hash_password(user_data.password)
+    const hashed_password = await this.crypto_service.hash_password(
+      user_data.password
+    )
 
     const created_user = await this.user_repository.create(
       user_data.email,
@@ -51,7 +54,12 @@ export class UserService {
       throw new ApiError(403, "Account is not verified")
     }
 
-    if (!(await this.is_password_correct(user.password, user_data.password))) {
+    if (
+      !(await this.crypto_service.compare_passwords(
+        user.password,
+        user_data.password
+      ))
+    ) {
       throw new ApiError(400, "Incorrect password")
     }
 
@@ -70,11 +78,18 @@ export class UserService {
 
     const user = results.rows[0]
 
-    if (!(await this.is_password_correct(user.password, data.old_password))) {
+    if (
+      !(await this.crypto_service.compare_passwords(
+        user.password,
+        data.old_password
+      ))
+    ) {
       throw new ApiError(400, "Incorrect password")
     }
 
-    const hashed_password = await this.hash_password(data.new_password)
+    const hashed_password = await this.crypto_service.hash_password(
+      data.new_password
+    )
 
     const updated_user = await this.user_repository.update_password(
       user.id,
@@ -102,16 +117,5 @@ export class UserService {
     await this.user_repository.update_refresh_token(id, refresh_token)
 
     return { refresh_token, access_token }
-  }
-
-  private async hash_password(password: string, salt_or_rounds?: number) {
-    return await bcrypt.hash(password, salt_or_rounds ?? 10)
-  }
-
-  private async is_password_correct(
-    hashed_password: string,
-    incomming_password: string
-  ) {
-    return await bcrypt.compare(incomming_password, hashed_password)
   }
 }
