@@ -46,13 +46,23 @@ import { container } from "tsyringe"
 import { health_router } from "./routes/health-route.js"
 import { UserRouter } from "./routes/user-route.js"
 import { ApiKeyRouter } from "./routes/api_key-route.js"
+import { NotificationJobRouter } from "./routes/notification_job-route.js"
+import { EmailWorker } from "./workers/email-worker.js"
+import { QueueEvents } from "./queues/events.js"
+import { NotificationQueue } from "./queues/notification-queue.js"
 
 const user_router = container.resolve(UserRouter)
 const api_key_router = container.resolve(ApiKeyRouter)
+const notification_job_router = container.resolve(NotificationJobRouter)
+
+container.resolve(NotificationQueue)
+container.resolve(EmailWorker)
+container.resolve(QueueEvents)
 
 app.use("/api/v1/health", health_router)
 app.use("/api/v1/user", user_router.router)
 app.use("/api/v1/api-key", api_key_router.router)
+app.use("/api/v1/notification-jobs", notification_job_router.router)
 
 import { error_handler } from "./middlewares/error_handler-middleware.js"
 

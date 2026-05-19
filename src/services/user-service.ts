@@ -24,7 +24,7 @@ export class UserService {
       user_data.email
     )
 
-    if (existing_user.rows.length === 1) {
+    if (existing_user) {
       throw new ApiError(409, "User with this email already exists")
     }
 
@@ -41,23 +41,21 @@ export class UserService {
   }
 
   async sign_in(user_data: TSignInUser) {
-    const results = await this.user_repository.find_by_email(user_data.email)
+    const user = await this.user_repository.find_by_email(user_data.email)
 
-    if (results.rows.length === 0) {
+    if (!user) {
       throw new ApiError(404, "User not found")
     }
 
-    const user = results.rows[0]
-
     if (!user.is_verified) {
       // TODO Resend OTP and redirect to otp-verification page
-      throw new ApiError(403, "Account is not verified")
+      // throw new ApiError(403, "Account is not verified")
     }
 
     if (
       !(await this.crypto_service.compare_passwords(
-        user.password,
-        user_data.password
+        user_data.password,
+        user.password
       ))
     ) {
       throw new ApiError(400, "Incorrect password")
@@ -70,18 +68,16 @@ export class UserService {
   }
 
   async update_password(data: TUpdatePassword) {
-    const results = await this.user_repository.find_by_id(data.id!)
+    const user = await this.user_repository.find_by_id(data.id!)
 
-    if (results.rows.length === 0) {
+    if (!user) {
       throw new ApiError(404, "User not found")
     }
 
-    const user = results.rows[0]
-
     if (
       !(await this.crypto_service.compare_passwords(
-        user.password,
-        data.old_password
+        data.old_password,
+        user.password
       ))
     ) {
       throw new ApiError(400, "Incorrect password")
@@ -100,13 +96,13 @@ export class UserService {
   }
 
   async get_user(id: string) {
-    const results = await this.user_repository.find_by_id(id)
+    const user = await this.user_repository.find_by_id(id)
 
-    if (results.rows.length === 0) {
+    if (!user) {
       throw new ApiError(404, "User not found")
     }
 
-    return results.rows[0]
+    return user
   }
 
   private async gen_refresh_access_tokens(id: string, email: string) {

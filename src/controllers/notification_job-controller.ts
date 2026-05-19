@@ -4,7 +4,7 @@ import { inject, injectable } from "tsyringe"
 import { NotificationJobService } from "../services/notification_job-service.js"
 import { async_handler } from "../utils/async-handler.js"
 import { ApiResponse } from "../utils/api-response.js"
-import { validate_request } from "../middlewares/validate-request.js"
+import { ApiError } from "../utils/api-error.js"
 
 @injectable()
 export class NotificationJobController {
@@ -21,8 +21,15 @@ export class NotificationJobController {
   })
 
   get_job_by_id = async_handler(async (req: Request, res: Response) => {
-    // This method is not implemented in the service/repository, but you can easily add it if needed
-    return res.status(200).json(new ApiResponse(200, null))
+    if (!req.params.id) {
+      throw new ApiError(400, "Job ID is required")
+    }
+
+    const job = await this.notification_job_service.get_by_id(
+      String(req.params.id)
+    )
+
+    return res.status(200).json(new ApiResponse(200, job))
   })
 
   get_all_jobs = async_handler(async (req: Request, res: Response) => {

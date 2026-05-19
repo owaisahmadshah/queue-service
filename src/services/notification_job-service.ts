@@ -9,6 +9,8 @@ import type {
 import { NotificationJobRepository } from "../repositories/notification_job-repository.js"
 import { CryptoService } from "./crypto-service.js"
 import { ApiError } from "../utils/api-error.js"
+import { NotificationQueue } from "../queues/notification-queue.js"
+import type { JobsOptions } from "bullmq"
 
 @injectable()
 export class NotificationJobService {
@@ -16,12 +18,16 @@ export class NotificationJobService {
     @inject(NotificationJobRepository)
     private notification_job_repository: NotificationJobRepository,
     @inject(CryptoService)
-    private crypto_service: CryptoService
+    private crypto_service: CryptoService,
+    @inject(NotificationQueue)
+    private notification_queue: NotificationQueue
   ) {}
 
   async create(
     data: TCreateNotificationJob
   ): Promise<TNotificationJobResponse> {
+    // If someone intentionally want to add two exact same jobs it will return the existing job
+    // Fix it
     const current_request_hash =
       this.crypto_service.gen_idempotency_key_fingerprint({
         channel: data.channel,
@@ -47,12 +53,34 @@ export class NotificationJobService {
       }
     }
 
-    return await this.notification_job_repository.create({
+    const created_job = await this.notification_job_repository.create({
       ...data,
       user_id: data.user_id!,
       request_hash: current_request_hash,
       status: "pending",
     })
+
+    const payload: Partial<TNotificationJobResponse> = {
+      id: created_job.id,
+      channel: created_job.channel,
+      payload: created_job.payload,
+      priority: created_job.priority,
+    }
+
+    const job_options: JobsOptions = {
+      attempts: created_job.max_attempts,
+      backoff: {
+        type: "exponential",
+        delay: 60000, // 1 minute
+      },
+      jobId: created_job.id,
+    }
+
+    if (created_job.channel === "email") {
+      this.notification_queue.add_email_job(payload, job_options)
+    }
+
+    return created_job
   }
 
   async update_status(id: string, status: TNotificationJobStatus) {
@@ -75,5 +103,18 @@ export class NotificationJobService {
     }
 
     return incremented_job
+  }
+
+  async get_by_id(id: string): Promise<TNotificationJobResponse | null> {
+    const job = await this.notification_job_repository.get_by_id(id)
+    return job
+  }
+
+  async get_by_idempotency(
+    key: string
+  ): Promise<TNotificationJobResponse | null> {
+    const job = await this.notification_job_repository.get_by_idempotency(key)
+
+    return job
   }
 }

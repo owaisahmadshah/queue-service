@@ -7,7 +7,7 @@ import { create_notification_job_request_schema } from "../types/notification_jo
 import { AuthMiddleware } from "../middlewares/auth_middleware.js"
 
 @injectable()
-export class NotificationJobRoute {
+export class NotificationJobRouter {
   public router: Router
 
   constructor(

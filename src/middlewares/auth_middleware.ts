@@ -27,13 +27,11 @@ export class AuthMiddleware {
         email: string
       }
 
-      const result = await this.user_repository.find_by_id(decoded.id)
+      const user = await this.user_repository.find_by_id(decoded.id)
 
-      if (result.rows.length === 0) {
+      if (!user) {
         return next(new ApiError(401, "Unauthorized: User no longer exists"))
       }
-
-      const user = result.rows[0]
 
       req.user = {
         id: user.id,

@@ -4,7 +4,7 @@ import { pool } from "../db/pool.js"
 
 @injectable()
 export class UserRepository {
-  create(email: string, password: string) {
+  async create(email: string, password: string) {
     const query = `
       INSERT INTO users (email, password)
       VALUES ($1, $2)
@@ -12,10 +12,12 @@ export class UserRepository {
     `
     const values = [email, password]
 
-    return pool.query(query, values)
+    const created_column = await pool.query(query, values)
+
+    return created_column.rows[0]
   }
 
-  update_refresh_token(id: string, refresh_token: string) {
+  async update_refresh_token(id: string, refresh_token: string) {
     const query = `
       UPDATE users
       SET refresh_token = $1
@@ -24,10 +26,12 @@ export class UserRepository {
     `
     const values = [refresh_token, id]
 
-    return pool.query(query, values)
+    const result = await pool.query(query, values)
+
+    return result.rows[0]
   }
 
-  update_password(id: string, password: string) {
+  async update_password(id: string, password: string) {
     const query = `
       UPDATE users
       SET password = $1
@@ -36,10 +40,12 @@ export class UserRepository {
     `
     const values = [password, id]
 
-    return pool.query(query, values)
+    const result = await pool.query(query, values)
+
+    return result.rows[0]
   }
 
-  find_by_email(email: string) {
+  async find_by_email(email: string) {
     const query = `
       SELECT id, email, password, created_at, is_verified
       FROM users
@@ -48,10 +54,12 @@ export class UserRepository {
     `
     const values = [email]
 
-    return pool.query(query, values)
+    const col = await pool.query(query, values)
+
+    return col.rows[0] || null
   }
 
-  find_by_id(id: string) {
+  async find_by_id(id: string) {
     const query = `
       SELECT id, email, password, created_at, is_verified
       FROM users
@@ -59,6 +67,8 @@ export class UserRepository {
     `
     const values = [id]
 
-    return pool.query(query, values)
+    const col = await pool.query(query, values)
+
+    return col.rows[0] || null
   }
 }

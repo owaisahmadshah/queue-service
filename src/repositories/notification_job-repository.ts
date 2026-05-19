@@ -7,6 +7,7 @@ import type {
 } from "../types/notification_job-type.js"
 
 import { pool } from "../db/pool.js"
+import { DEF_MAX_ATTEMPTS } from "../config/constants.js"
 
 @injectable()
 export class NotificationJobRepository {
@@ -28,7 +29,7 @@ export class NotificationJobRepository {
       data.idempotency_key,
       data.request_hash,
       data.scheduled_at,
-      data.max_attempts ?? 3,
+      data.max_attempts ?? DEF_MAX_ATTEMPTS,
     ]
 
     const { rows } = await pool.query(query, values)
@@ -63,7 +64,9 @@ export class NotificationJobRepository {
     return rows[0] || null
   }
 
-  async increment_attempts(id: string): Promise<TNotificationJobResponse> {
+  async increment_attempts(
+    id: string
+  ): Promise<TNotificationJobResponse | null> {
     const query = `
       UPDATE notification_jobs
       SET attempts = attempts + 1, 
@@ -75,6 +78,27 @@ export class NotificationJobRepository {
 
     const { rows } = await pool.query(query, [id])
 
+    return rows[0] || null
+  }
+
+  async get_by_idempotency(
+    key: string
+  ): Promise<TNotificationJobResponse | null> {
+    const query = `
+      SELECT * FROM notification_jobs
+      WHERE idempotency_key = $1
+      LIMIT 1
+    `
+    const { rows } = await pool.query(query, [key])
+    return rows[0] || null
+  }
+
+  async get_by_id(id: string): Promise<TNotificationJobResponse | null> {
+    const query = `
+      SELECT * FROM notification_jobs
+      WHERE id = $1
+    `
+    const { rows } = await pool.query(query, [id])
     return rows[0] || null
   }
 }
